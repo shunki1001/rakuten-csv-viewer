@@ -17,7 +17,7 @@ function ContentView({ selectedProductData, viewMode, onViewModeChange }) {
       {/* 固定表示のコントロールエリア */}
       <Box sx={{ padding: 2, borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: 2 }}>
          <Typography variant="subtitle1">表示モード:</Typography>
-         <FormControlLabel
+         {/* <FormControlLabel
             control={
               <Checkbox
                 checked={viewMode === 'pc'}
@@ -36,10 +36,10 @@ function ContentView({ selectedProductData, viewMode, onViewModeChange }) {
               />
             }
             label="SP"
-          />
+          /> */}
            {/* Note: You might prefer a single toggle/switch */}
             {/* Example with one checkbox toggling SP: */}
-           {/* <FormControlLabel
+           <FormControlLabel
                 control={
                   <Checkbox
                     checked={viewMode === 'sp'}
@@ -48,11 +48,11 @@ function ContentView({ selectedProductData, viewMode, onViewModeChange }) {
                   />
                 }
                 label="SP デザインを表示"
-            /> */}
+            />
       </Box>
 
       {/* iFrameエリア */}
-      <Box sx={{ flexGrow: 1, border: 'none', width: '100%', height: 'calc(100% - 60px)' }}> {/* Adjust height based on control height */}
+      <Box sx={{ flexGrow: 1, border: 'none', width: '100%', height: 'calc(100% - 60px)', maxWidth: viewMode === 'pc' ? 1200 : 480}}> {/* Adjust height based on control height */}
         {/* iframeでHTMLを表示 */}
         <iframe
           srcDoc={htmlContent || '<html><body><p>デザインHTMLがありません。</p></body></html>'}
