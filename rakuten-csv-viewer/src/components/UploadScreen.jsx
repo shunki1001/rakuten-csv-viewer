@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
+import Encoding from 'encoding-japanese';
 
 function UploadScreen({ onFileUpload }) {
   const onDrop = useCallback((acceptedFiles) => {
@@ -146,6 +147,35 @@ function UploadScreen({ onFileUpload }) {
         onClick={() => document.querySelector('input[type="file"]').click()} // fallback for button click
       >
         ファイルを選択
+      </Button>
+      <Button
+        variant="outlined"
+        sx={{ mt: 2 }}
+        onClick={() => {
+          const sampleData = [
+            ['商品管理番号（商品URL）', 'PC用販売説明文', 'スマートフォン用商品説明文'],
+            ['12345', '<html><body>PC用説明文サンプル1</body></html>', '<html><body>SP用説明文サンプル1</body></html>'],
+            ['67890', '<html><body>PC用説明文サンプル2</body></html>', '<html><body>SP用説明文サンプル2</body></html>'],
+          ];
+          const csvContent = sampleData.map(e => e.join(',')).join('\n');
+          // Shift-JISにエンコード
+          const sjisArray = Encoding.convert(csvContent, {
+            to: 'SJIS',
+            type: 'array',
+          });
+          const uint8Array = new Uint8Array(sjisArray);
+          const blob = new Blob([uint8Array], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'sample.csv';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }}
+      >
+        サンプルCSVをダウンロード
       </Button>
     </Box>
   );
