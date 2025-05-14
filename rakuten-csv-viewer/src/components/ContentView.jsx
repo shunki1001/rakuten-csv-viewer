@@ -1,7 +1,7 @@
 import React from 'react';
-import { Box, Typography, FormControlLabel, Checkbox } from '@mui/material';
+import { Box, Typography, FormControlLabel, Checkbox, Button } from '@mui/material';
 
-function ContentView({ selectedProductData, viewMode, onViewModeChange }) {
+function ContentView({ selectedProductData, viewMode, onViewModeChange, onBackToUpload }) {
   if (!selectedProductData) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -15,31 +15,9 @@ function ContentView({ selectedProductData, viewMode, onViewModeChange }) {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', width: '100%' }}>
       {/* 固定表示のコントロールエリア */}
-      <Box sx={{ padding: 2, borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ padding: 2, borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: 2}}>
          <Typography variant="subtitle1">表示モード:</Typography>
-         {/* <FormControlLabel
-            control={
-              <Checkbox
-                checked={viewMode === 'pc'}
-                onChange={() => onViewModeChange('pc')}
-                name="pc-view"
-              />
-            }
-            label="PC"
-          />
-           <FormControlLabel
-            control={
-              <Checkbox
-                checked={viewMode === 'sp'}
-                onChange={() => onViewModeChange('sp')}
-                name="sp-view"
-              />
-            }
-            label="SP"
-          /> */}
-           {/* Note: You might prefer a single toggle/switch */}
-            {/* Example with one checkbox toggling SP: */}
-           <FormControlLabel
+         <FormControlLabel
                 control={
                   <Checkbox
                     checked={viewMode === 'sp'}
@@ -49,6 +27,16 @@ function ContentView({ selectedProductData, viewMode, onViewModeChange }) {
                 }
                 label="SP デザインを表示"
             />
+            <Box sx={{flexGrow: 1}}>
+
+            </Box>
+            <Button
+              variant="contained"
+              onClick={onBackToUpload}
+              sx={{ margin: 2 }}
+            >
+              アップロード画面に戻る
+            </Button>
       </Box>
 
       {/* iFrameエリア */}
@@ -58,8 +46,6 @@ function ContentView({ selectedProductData, viewMode, onViewModeChange }) {
           srcDoc={htmlContent || '<html><body><p>デザインHTMLがありません。</p></body></html>'}
           title="Design Preview"
           style={{ width: '100%', height: '100%', border: 'none' }}
-          // セキュリティのためのsandbox属性
-          // 必要に応じて allow-scripts などを追加
           sandbox="allow-same-origin allow-forms allow-popups allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-sequences allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
         ></iframe>
       </Box>

@@ -30,6 +30,10 @@ function App() {
     setViewMode(mode);
   };
 
+  const onBackToUpload = () =>{
+    setCsvData(null)
+  }
+
   return (
     <Container maxWidth="xl" sx={{ height: '100vh', display: 'flex', flexDirection: 'column', padding: 0 }}>
       {csvData ? (
@@ -39,6 +43,7 @@ function App() {
           viewMode={viewMode}
           onProductSelect={handleProductSelect}
           onViewModeChange={handleViewModeChange}
+          onBackToUpload={onBackToUpload}
         />
       ) : (
         <UploadScreen onFileUpload={handleFileUpload} />

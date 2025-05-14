@@ -3,7 +3,7 @@ import { Box, Grid } from '@mui/material';
 import Sidebar from './Sidebar';
 import ContentView from './ContentView';
 
-function MainLayout({ csvData, selectedProductData, viewMode, onProductSelect, onViewModeChange }) {
+function MainLayout({ csvData, selectedProductData, viewMode, onProductSelect, onViewModeChange, onBackToUpload }) {
   return (
     <Box sx={{ flexGrow: 1, height: '100%', display: 'flex' }}>
       <Grid container spacing={0} sx={{ height: '100%', width: '100%'}}>
@@ -27,6 +27,7 @@ function MainLayout({ csvData, selectedProductData, viewMode, onProductSelect, o
             selectedProductData={selectedProductData}
             viewMode={viewMode}
             onViewModeChange={onViewModeChange}
+            onBackToUpload={onBackToUpload}
           />
         </Grid>
       </Grid>
