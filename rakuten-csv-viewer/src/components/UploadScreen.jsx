@@ -105,14 +105,17 @@ function UploadScreen({ onFileUpload }) {
       <Typography variant="h4" gutterBottom>
         HTMLデザインプレビューツール
       </Typography>
+      <Typography variant="body1">
+        このツールは、楽天の商品CSVファイルをアップロードすることで、各商品のデザインをプレビューできます。
+      </Typography>
       <Typography variant="body1" sx={{ mb: 4 }}>
-        このツールは、商品管理番号（商品URL）、PC用販売説明文、スマートフォン用商品説明文の3つのカラムを持つCSVファイルをアップロードすることで、各商品のデザインをプレビューできます。
+        CSVファイルはブラウザ（Chorme, Edge）内で完結し、どこかにアップロードされることはありません。
       </Typography>
        <Typography variant="body2" color="textSecondary" sx={{ mb: 4 }}>
-        **CSVファイルの形式:**
+        CSVファイルの形式:
         最初の行はヘッダーとし、必ず以下のカラム名を含めてください。<br/>
-        `商品管理番号（商品URL）,PC用販売説明文,スマートフォン用商品説明文`<br/>
-        各HTMLカラムには、`&lt;html&gt;`タグから始まる完全なHTMLコードを記載してください。
+        商品管理番号（商品URL）, PC用販売説明文, スマートフォン用商品説明文<br/>
+        他のカラムはあってもなくても影響しません。
       </Typography>
       <Paper
         {...getRootProps()}
