@@ -4,12 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "NODE_OPTIONS=--openssl-legacy-provider vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -25,6 +27,6 @@
     "globals": "^16.3.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "vite": "^7.0.4"
+    "vite": "^5.3.0"
   }
 }
