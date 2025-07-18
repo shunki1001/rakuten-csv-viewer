@@ -1,17 +1,17 @@
-import React, { useState, useMemo } from 'react';
-import { Container, Box, Typography } from '@mui/material';
-import UploadScreen from './components/UploadScreen';
-import MainLayout from './components/MainLayout';
+import React, { useState, useMemo } from "react";
+import { Container, Box, Typography } from "@mui/material";
+import UploadScreen from "./components/UploadScreen";
+import MainLayout from "./components/MainLayout";
 
 function App() {
   const [csvData, setCsvData] = useState(null); // CSVパース後のデータ
   const [selectedProductId, setSelectedProductId] = useState(null); // 選択中の商品ID
-  const [viewMode, setViewMode] = useState('pc'); // 'pc' or 'sp'
+  const [viewMode, setViewMode] = useState("pc"); // 'pc' or 'sp
 
   // 選択中の商品のデータを取得
   const selectedProductData = useMemo(() => {
     if (!csvData || !selectedProductId) return null;
-    return csvData.find(item => item.商品ID === selectedProductId);
+    return csvData.find((item) => item.商品ID === selectedProductId);
   }, [csvData, selectedProductId]);
 
   const handleFileUpload = (data) => {
@@ -30,12 +30,20 @@ function App() {
     setViewMode(mode);
   };
 
-  const onBackToUpload = () =>{
-    setCsvData(null)
-  }
+  const onBackToUpload = () => {
+    setCsvData(null);
+  };
 
   return (
-    <Container maxWidth="xl" sx={{ height: '100vh', display: 'flex', flexDirection: 'column', padding: 0 }}>
+    <Container
+      maxWidth="xl"
+      sx={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        padding: 0,
+      }}
+    >
       {csvData ? (
         <MainLayout
           csvData={csvData}
