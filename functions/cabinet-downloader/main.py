@@ -140,8 +140,10 @@ def create_zip_download(request):
                     image_url = file_info["fileUrl"]  # ストアURLは要確認
                     image_res = requests.get(image_url)
                     if image_res.status_code == 200:
-                        # zipファイルに画像データを書き込み
-                        zf.writestr(file_info["fileName"], image_res.content)
+                        # filePathからファイル名（拡張子込み）を取得してzipに追加
+                        # fileNameには拡張子が含まれない場合があるため
+                        file_name_from_path = file_info["filePath"].split("/")[-1]
+                        zf.writestr(file_name_from_path, image_res.content)
 
         zip_buffer.seek(0)
 
