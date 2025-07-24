@@ -26,6 +26,12 @@ resource "google_project_iam_member" "project" {
   member  = "serviceAccount:${google_service_account.account.email}"
 }
 
+resource "google_project_iam_member" "token_creator" {
+  project = local.project
+  role    = "roles/iam.serviceAccountTokenCreator"
+  member  = "serviceAccount:${google_service_account.account.email}"
+}
+
 data "google_storage_bucket" "bucket" {
   name                        = "${local.project}-gcf-source"  # Every bucket name must be globally unique
 }

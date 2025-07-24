@@ -7,6 +7,7 @@ import zipfile
 from datetime import timedelta
 
 import functions_framework
+import google.auth
 import requests
 from flask import jsonify
 from google.cloud import storage
@@ -152,9 +153,16 @@ def create_zip_download(request):
 
         blob.upload_from_file(zip_buffer, content_type="application/zip")
 
-        # 署名付きURLを生成（15分間有効）
+        # Cloud Functionsのデフォルトサービスアカウントは直接署名できないため、
+        # IAM APIを介して署名を行う。そのためには、サービスアカウントのメールアドレスが必要。
+        credentials, _ = google.auth.default()
+        credentials.refresh(google.auth.transport.requests.Request())
         signed_url = blob.generate_signed_url(
-            version="v4", expiration=timedelta(minutes=15), method="GET"
+            version="v4",
+            expiration=timedelta(minutes=15),  # URLの有効期限を15分に設定
+            method="GET",
+            service_account_email=credentials.service_account_email,
+            access_token=credentials.token,
         )
 
         return (jsonify({"downloadUrl": signed_url}), 200, CORS_HEADERS)

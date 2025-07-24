@@ -3,6 +3,7 @@ variable "iam_roles" {
   type        = list(string)
   default     = [
     "roles/storage.objectUser",
+    "roles/iam.serviceAccountTokenCreator"
   ]
 }
 variable cloud_functions {}
