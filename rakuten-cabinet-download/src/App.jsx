@@ -10,9 +10,9 @@ import {
 
 // APIエンドポイントのURL（Cloud Functionsのデプロイ先）
 const LIST_API_URL =
-  "https://<region>-<project-id>.cloudfunctions.net/list-directories";
+  "https://asia-northeast1-smarthome-428311.cloudfunctions.net/cabinet-directory-reader";
 const ZIP_API_URL =
-  "https://<region>-<project-id>.cloudfunctions.net/create-zip-download";
+  "https://asia-northeast1-smarthome-428311.cloudfunctions.net/cabinet-files-downloader";
 
 function App() {
   // --- 状態管理 (変更なし) ---
