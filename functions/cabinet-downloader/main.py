@@ -128,22 +128,26 @@ def create_zip_download(request):
         data = request.get_json()
         service_secret = data["serviceSecret"]
         license_key = data["licenseKey"]
-        folder_ids = data["folderIds"]  # フロントから送られてくるフォルダIDの配列
+        folders = data["folders"]  # フロントから {folderId, folderPath} の配列を受け取る
 
         # インメモリでzipファイルを作成
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-            for folder_id in folder_ids:
+            for folder in folders:
+                folder_id = folder["folderId"]
+                folder_path = folder["folderPath"].strip("/") # 前後のスラッシュを削除
+
                 files = get_files_in_folder(service_secret, license_key, folder_id)
                 for file_info in files:
                     # 画像のURLから直接コンテンツを取得
-                    image_url = file_info["fileUrl"]  # ストアURLは要確認
+                    image_url = file_info["fileUrl"]
                     image_res = requests.get(image_url)
                     if image_res.status_code == 200:
-                        # filePathからファイル名（拡張子込み）を取得してzipに追加
-                        # fileNameには拡張子が含まれない場合があるため
+                        # filePathからファイル名（拡張子込み）を取得
                         file_name_from_path = file_info["filePath"].split("/")[-1]
-                        zf.writestr(file_name_from_path, image_res.content)
+                        # zip内のパスを構築
+                        zip_path = f"{folder_path}/{file_name_from_path}"
+                        zf.writestr(zip_path, image_res.content)
 
         zip_buffer.seek(0)
 

@@ -1,12 +1,13 @@
 // src/App.js
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import axios from "axios";
 import {
   CloudArrowDownIcon,
   DocumentMagnifyingGlassIcon,
-} from "@heroicons/react/24/outline"; // アイコン用にライブラリを導入
-
-// アイコンのインストール: npm install @heroicons/react
+  FolderIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 
 // APIエンドポイントのURL（Cloud Functionsのデプロイ先）
 const LIST_API_URL =
@@ -14,8 +15,132 @@ const LIST_API_URL =
 const ZIP_API_URL =
   "https://asia-northeast1-smarthome-428311.cloudfunctions.net/cabinet-files-downloader";
 
+// --- Helper Functions ---
+
+// ディレクトリパスの配列からツリー構造を構築
+const buildTree = (directories) => {
+  const tree = { name: "root", children: {} };
+
+  directories.forEach((dir) => {
+    // 先頭と末尾のスラッシュを削除し、パスを分割
+    const parts = dir.folderPath.replace(/^\/|\/$/g, "").split("/");
+    let currentNode = tree;
+
+    parts.forEach((part, index) => {
+      if (!currentNode.children[part]) {
+        currentNode.children[part] = {
+          name: part,
+          children: {},
+        };
+      }
+      // 最後の部分であれば、IDとフルパスを格納
+      if (index === parts.length - 1) {
+        currentNode.children[part].folderId = dir.folderId;
+        currentNode.children[part].fullPath = dir.folderPath;
+      }
+      currentNode = currentNode.children[part];
+    });
+  });
+
+  return tree.children;
+};
+
+// ツリーから特定のノードとその子孫のIDを再帰的に収集
+const getIdsRecursively = (node) => {
+  let ids = [];
+  if (node.folderId) {
+    ids.push(node.folderId);
+  }
+  Object.values(node.children).forEach((child) => {
+    ids = ids.concat(getIdsRecursively(child));
+  });
+  return ids;
+};
+
+// --- Components ---
+
+// ディレクトリツリーを再帰的に描画するコンポーネント
+const DirectoryTree = ({
+  nodes,
+  level,
+  onToggle,
+  onSelect,
+  selectedDirs,
+  openFolders,
+}) => {
+  return (
+    <div className="space-y-1">
+      {Object.values(nodes)
+        .sort((a, b) => a.name.localeCompare(b.name)) // 名前でソート
+        .map((node) => {
+          const isOpen = openFolders.has(node.fullPath);
+          const hasChildren = Object.keys(node.children).length > 0;
+          const isSelected = node.folderId && selectedDirs.has(node.folderId);
+
+          return (
+            <div key={node.fullPath || node.name}>
+              <div
+                className="flex items-center space-x-2 p-1 rounded-md hover:bg-indigo-50 cursor-pointer"
+                style={{ paddingLeft: `${level * 1.5}rem` }}
+              >
+                {/* トグルアイコン */}
+                <div className="w-4 h-4 flex items-center justify-center">
+                  {hasChildren && (
+                    <ChevronRightIcon
+                      className={`h-4 w-4 text-slate-500 transition-transform ${
+                        isOpen ? "rotate-90" : ""
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle(node.fullPath);
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* チェックボックス */}
+                {node.folderId && (
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => onSelect(node)}
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                )}
+
+                {/* フォルダアイコンと名前 */}
+                <div
+                  className="flex items-center space-x-2 flex-grow"
+                  onClick={() => hasChildren && onToggle(node.fullPath)}
+                >
+                  <FolderIcon className="h-5 w-5 text-indigo-500" />
+                  <span className="text-slate-700 select-none">
+                    {node.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* 子要素 */}
+              {hasChildren && isOpen && (
+                <DirectoryTree
+                  nodes={node.children}
+                  level={level + 1}
+                  onToggle={onToggle}
+                  onSelect={onSelect}
+                  selectedDirs={selectedDirs}
+                  openFolders={openFolders}
+                />
+              )}
+            </div>
+          );
+        })}
+    </div>
+  );
+};
+
+// --- Main App Component ---
+
 function App() {
-  // --- 状態管理 (変更なし) ---
   const [credentials, setCredentials] = useState({
     serviceSecret: "",
     licenseKey: "",
@@ -25,8 +150,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isZipping, setIsZipping] = useState(false);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openFolders, setOpenFolders] = useState(new Set());
 
-  // --- 関数 (変更なし) ---
   const handleCredentialChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
@@ -47,12 +173,27 @@ function App() {
     }
   };
 
-  const handleSelectionChange = (folderId) => {
-    const newSelection = new Set(selectedDirs);
-    if (newSelection.has(folderId)) {
-      newSelection.delete(folderId);
+  // フォルダの開閉をトグル
+  const handleToggleFolder = (path) => {
+    const newOpenFolders = new Set(openFolders);
+    if (newOpenFolders.has(path)) {
+      newOpenFolders.delete(path);
     } else {
-      newSelection.add(folderId);
+      newOpenFolders.add(path);
+    }
+    setOpenFolders(newOpenFolders);
+  };
+
+  // フォルダ選択の処理（子も含む）
+  const handleSelectionChange = (node) => {
+    const newSelection = new Set(selectedDirs);
+    const idsToToggle = getIdsRecursively(node);
+    const isSelected = idsToToggle.every((id) => newSelection.has(id));
+
+    if (isSelected) {
+      idsToToggle.forEach((id) => newSelection.delete(id));
+    } else {
+      idsToToggle.forEach((id) => newSelection.add(id));
     }
     setSelectedDirs(newSelection);
   };
@@ -61,11 +202,21 @@ function App() {
     setIsZipping(true);
     setError("");
     try {
+      // 選択されたIDに対応するディレクトリ情報を取得
+      const selectedFolderData = directories.filter((dir) =>
+        selectedDirs.has(dir.folderId)
+      );
+
       const response = await axios.post(ZIP_API_URL, {
         ...credentials,
-        folderIds: Array.from(selectedDirs),
+        // IDとパスのペアをバックエンドに送信
+        folders: selectedFolderData.map((dir) => ({
+          folderId: dir.folderId,
+          folderPath: dir.folderPath,
+        })),
       });
-      window.location.href = response.data.downloadUrl;
+      // ダウンロード用のURLを新しいタブで開く
+      window.open(response.data.downloadUrl, "_blank");
     } catch (err) {
       setError("ダウンロードファイルの作成に失敗しました。");
       console.error(err);
@@ -73,6 +224,19 @@ function App() {
       setIsZipping(false);
     }
   };
+
+  // 検索とツリー構築をメモ化
+  const directoryTree = useMemo(() => {
+    if (directories.length === 0) return {};
+
+    const filtered = searchTerm
+      ? directories.filter((dir) =>
+          dir.folderPath.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : directories;
+
+    return buildTree(filtered);
+  }, [directories, searchTerm]);
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col items-center justify-center font-sans p-4">
@@ -166,24 +330,28 @@ function App() {
             <h2 className="text-lg font-semibold text-slate-700 mb-4">
               Step 2: ディレクトリを選択
             </h2>
-            <div className="max-h-60 overflow-y-auto border rounded-lg p-3 space-y-2 bg-slate-50/50">
-              {directories.map((dir) => (
-                <label
-                  key={dir.folderId}
-                  className="flex items-center space-x-3 p-2 rounded-md hover:bg-indigo-50 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedDirs.has(dir.folderId)}
-                    onChange={() => handleSelectionChange(dir.folderId)}
-                    className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    disabled={isZipping}
-                  />
-                  <span className="text-slate-700 select-none">
-                    {dir.folderPath}
-                  </span>
-                </label>
-              ))}
+            {/* 検索バー */}
+            <div className="relative mb-4">
+              <input
+                type="text"
+                placeholder="検索..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+              />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            </div>
+
+            {/* ディレクトリツリー */}
+            <div className="max-h-72 overflow-y-auto border rounded-lg p-2 bg-slate-50/50">
+              <DirectoryTree
+                nodes={directoryTree}
+                level={0}
+                onToggle={handleToggleFolder}
+                onSelect={handleSelectionChange}
+                selectedDirs={selectedDirs}
+                openFolders={openFolders}
+              />
             </div>
           </div>
         )}
