@@ -152,6 +152,7 @@ function App() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [openFolders, setOpenFolders] = useState(new Set());
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const handleCredentialChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -362,9 +363,35 @@ function App() {
             <h2 className="text-lg font-semibold text-slate-700 mb-4">
               Step 3: ダウンロードを実行
             </h2>
+
+            {/* 利用規約 */}
+            <div className="mb-4 flex items-center">
+              <input
+                id="terms-checkbox"
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <label
+                htmlFor="terms-checkbox"
+                className="ml-2 text-sm text-slate-600"
+              >
+                <a
+                  href="https://www.f-brains.tokyo/wp/rakuten-tools-terms/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:underline"
+                >
+                  利用規約
+                </a>
+                に同意します。
+              </label>
+            </div>
+
             <button
               onClick={handleDownload}
-              disabled={isZipping || selectedDirs.size === 0}
+              disabled={isZipping || selectedDirs.size === 0 || !agreedToTerms}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
               {isZipping ? (
