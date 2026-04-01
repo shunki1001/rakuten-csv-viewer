@@ -153,6 +153,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [openFolders, setOpenFolders] = useState(new Set());
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [downloadUrls, setDownloadUrls] = useState([]);
 
   const handleCredentialChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -161,6 +162,7 @@ function App() {
   const fetchDirectories = async () => {
     setIsLoading(true);
     setError("");
+    setDownloadUrls([]);
     try {
       const response = await axios.post(LIST_API_URL, credentials);
       setDirectories(response.data);
@@ -202,6 +204,8 @@ function App() {
   const handleDownload = async () => {
     setIsZipping(true);
     setError("");
+    setDownloadUrls([]); // Reset previous download links
+
     try {
       // 選択されたIDに対応するディレクトリ情報を取得
       const selectedFolderData = directories.filter((dir) =>
@@ -216,8 +220,16 @@ function App() {
           folderPath: dir.folderPath,
         })),
       });
-      // ダウンロード用のURLを新しいタブで開く
-      window.open(response.data.downloadUrl, "_blank");
+
+      // The backend now returns an array of URLs
+      if (response.data && Array.isArray(response.data.downloadUrls)) {
+        setDownloadUrls(response.data.downloadUrls);
+        if (response.data.downloadUrls.length === 0) {
+          setError("対象のファイルが見つかりませんでした。");
+        }
+      } else {
+        setError("ダウンロードURLの取得に失敗しました。予期しない応答です。");
+      }
     } catch (err) {
       setError("ダウンロードファイルの作成に失敗しました。");
       console.error(err);
@@ -425,6 +437,35 @@ function App() {
                 </>
               )}
             </button>
+          </div>
+        )}
+
+        {/* --- ダウンロードリンク表示エリア --- */}
+        {downloadUrls.length > 0 && (
+          <div className="p-5 border rounded-lg bg-emerald-50 text-emerald-900">
+            <h2 className="text-lg font-semibold mb-3">
+              ダウンロード準備完了
+            </h2>
+            <p className="text-sm text-emerald-800/80 mb-4">
+              以下のリンクからzipファイルをダウンロードしてください。(15分間有効)
+            </p>
+            <div className="space-y-2">
+              {downloadUrls.map((url, index) => (
+                <a
+                  key={index}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 bg-white border border-emerald-200 rounded-lg hover:bg-emerald-100/50 hover:border-emerald-300 transition duration-150"
+                >
+                  <CloudArrowDownIcon className="h-6 w-6 text-emerald-500" />
+                  <span className="text-emerald-800 font-medium text-sm">
+                    ダウンロードファイル {index + 1}
+                  </span>
+                  <ChevronRightIcon className="h-4 w-4 text-emerald-600 ml-auto" />
+                </a>
+              ))}
+            </div>
           </div>
         )}
       </div>
